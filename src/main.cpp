@@ -14,9 +14,10 @@ char received[3];
 char registerAddress;
 
 int button[4] = {0};
-void writeToBus(char ra, int btn, boolean send)
+boolean shouldSendToMasterOrNot = false;
+void writeToBus(char ra, int btn)
 {
-  if (send)
+  if (shouldSendToMasterOrNot)
   {
     char deviceAddress = 0b00000001;
     digitalWrite(BUSCTRL, HIGH);
@@ -55,42 +56,42 @@ void InterruptSrevicesHandlerRead(char data, int pol)
   }
 }
 
-void InterruptSrevicesHandler1(boolean sendOrNot)
+void InterruptSrevicesHandler1()
 {
   button[0] = !button[0];
   rtObj.changeButtonState(1);
   delay(2);
   registerAddress = 0b00000001;
   Serial.println("InterruptSrevicesHandler1");
-  writeToBus(registerAddress, button[0], sendOrNot);
+  writeToBus(registerAddress, button[0]);
 }
-void InterruptSrevicesHandler2(boolean sendOrNot)
+void InterruptSrevicesHandler2()
 {
   button[1] = !button[1];
   rtObj.changeButtonState(2);
   delay(2);
   registerAddress = 0b00000010;
   Serial.println("InterruptSrevicesHandler2");
-  writeToBus(registerAddress, button[1], sendOrNot);
+  writeToBus(registerAddress, button[1]);
 }
-void InterruptSrevicesHandler3(boolean sendOrNot)
+void InterruptSrevicesHandler3()
 {
   button[2] = !button[2];
   rtObj.changeButtonState(3);
   delay(2);
   registerAddress = 0b00000011;
   Serial.println("InterruptSrevicesHandler3");
-  writeToBus(registerAddress, button[2], sendOrNot);
+  writeToBus(registerAddress, button[2]);
 }
 
-void InterruptSrevicesHandler4(boolean sendOrNot)
+void InterruptSrevicesHandler4()
 {
   button[3] = !button[3];
   rtObj.changeButtonState(4);
   delay(2);
   registerAddress = 0b00000100;
   Serial.println("InterruptSrevicesHandler4");
-  writeToBus(registerAddress, button[3], sendOrNot);
+  writeToBus(registerAddress, button[3]);
 }
 
 void rt_OneStep(void);
@@ -134,7 +135,7 @@ void sendStatusToMaster()
   data += (rtObj.rtY.l3 ? 4 : 0);
   data += (rtObj.rtY.l4 ? 8 : 0);
   Serial.println(data);
-  writeToBus(0b10000000, data, true);
+  writeToBus(0b10000000, data);
 }
 
 Ticker timer1(rt_OneStep, 200);
@@ -174,8 +175,9 @@ void loop()
 
     BusSerial.readBytes(received, 3);
     Serial.println(int(received[0]));
-    if (received[0] == 2)
+    if (received[0] == 3)
     {
+      shouldSendToMasterOrNot = true;
       if (received[1] == -128)
       {
         Serial.println("salam");
@@ -205,30 +207,34 @@ void loop()
         }
       }
     }
+    else
+    {
+      shouldSendToMasterOrNot = false;
+    }
 
     // buffer is your received data...
   }
   else if (digitalRead(BUTTON1))
   {
-    InterruptSrevicesHandler1(true);
+    InterruptSrevicesHandler1();
     while (digitalRead(BUTTON1))
       ;
   }
   else if (digitalRead(BUTTON2))
   {
-    InterruptSrevicesHandler2(true);
+    InterruptSrevicesHandler2();
     while (digitalRead(BUTTON2))
       ;
   }
   else if (digitalRead(BUTTON3))
   {
-    InterruptSrevicesHandler3(true);
+    InterruptSrevicesHandler3();
     while (digitalRead(BUTTON3))
       ;
   }
   else if (digitalRead(BUTTON4))
   {
-    InterruptSrevicesHandler4(true);
+    InterruptSrevicesHandler4();
     while (digitalRead(BUTTON4))
       ;
   }
